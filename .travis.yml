@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t asartipi/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true asartipi/react-test npm test
+
+after_success:
+  - docker build -t asartipi/multi-client ./client
+  - docker build -t asartipi/multi-nginx ./nginx
+  - docker build -t asartipi/multi-server ./server
+  - docker build -t asartipi/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push asartipi/multi-client
+  - docker push asartipi/multi-nginx
+  - docker push asartipi/multi-server
+  - docker push asartipi/multi-worker
